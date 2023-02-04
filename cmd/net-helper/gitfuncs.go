@@ -107,7 +107,7 @@ func Fullpull(c *cli.Context) error {
 // AddCommitPush - Add, Commit, Push local changes to current branch
 func AddCommitPush(c *cli.Context) error {
 	commitMsg := os.Args[2]
-	existPushCommands := GitCmdList{
+	baseGitCmds := GitCmdList{
 		GitCmd{
 			cmd:  "add",
 			args: []string{"."},
@@ -115,40 +115,32 @@ func AddCommitPush(c *cli.Context) error {
 		GitCmd{
 			cmd:  "commit",
 			args: []string{"-m", commitMsg},
-		},
-		GitCmd{
-			cmd:  "push",
-			args: nil,
-		},
-	}
-
-	freshPushCommands := GitCmdList{
-		GitCmd{
-			cmd:  "add",
-			args: []string{"."},
-		},
-		GitCmd{
-			cmd:  "commit",
-			args: []string{"-m", commitMsg},
-		},
-		GitCmd{
-			cmd:  "push",
-			args: []string{"-u", "origin", "HEAD"},
 		},
 	}
 
 	br, err := getGitBranch()
+	if err != nil {
+		fmt.Println(err)
+	}
 	branchExists, err := checkBranchExists(br)
 	if err != nil {
 		panic(err)
 	}
 
-	var cmds GitCmdList
+	var pushCmd GitCmd
 	if branchExists {
-		cmds = existPushCommands
+		pushCmd = GitCmd{
+			cmd:  "push",
+			args: nil,
+		}
 	} else {
-		cmds = freshPushCommands
+		pushCmd = GitCmd{
+			cmd:  "push",
+			args: []string{"-u", "origin", "HEAD"},
+		}
 	}
+
+	cmds := append(baseGitCmds, pushCmd)
 
 	info, err := cmds.multipass()
 	if err != nil {
