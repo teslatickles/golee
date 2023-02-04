@@ -152,7 +152,28 @@ func AddCommitPush(c *cli.Context) error {
 }
 
 func checkBranchExists(branch string) (bool, error) {
-	return false, nil
+	cmds := GitCmdList{
+		GitCmd{
+			cmd: "ls-remote",
+			args: []string{
+				"origin",
+				branch,
+				"|",
+				"wc",
+				"-l",
+			},
+		},
+	}
+
+	branchExists, err := cmds.multipass()
+	if err != nil {
+		return false, err
+	}
+	if branchExists[0] == "0" {
+		return false, nil
+	} else {
+		return true, nil
+	}
 }
 
 // StashPullPop - Runs git stash, pull, pop
